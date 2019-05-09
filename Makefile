@@ -18,7 +18,7 @@ else
 endif
 
 # RPM build variables
-MOCK_BIN ?= mock
+MOCK_BIN ?= mock --old-chroot # Needed to work inside of a container
 MOCK_CONFIG ?= epel-7-x86_64
 
 RPM_NVR = $(NAME)-$(VERSION)-$(RELEASE)$(RPM_DIST)
@@ -98,8 +98,13 @@ devimage:
 	docker build --rm=true -t $(IMAGE_NAME)-dev -f Dockerfile.dev .
 
 rpm:
-	docker-compose -f packaging/rpm/docker-compose.yml \
-	  run --rm -e RELEASE=$(RELEASE) rpm-builder "make mock-rpm"
+	docker-compose -f packaging/rpm/docker-compose.yml build rpm-builder
+	docker-compose -f packaging/rpm/docker-compose.yml run --rm \
+		-e RELEASE=$(RELEASE) \
+		-e MOCK_BIN='$(MOCK_BIN)' \
+		-e MOCK_CONFIG=$(MOCK_CONFIG) \
+		-e RPM_DIST=$(RPM_DIST) \
+	  rpm-builder "make mock-rpm"
 
 srpm:
 	docker-compose -f packaging/rpm/docker-compose.yml \
