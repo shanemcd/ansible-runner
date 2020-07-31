@@ -189,6 +189,13 @@ class RunnerConfig(object):
         self.prepare_inventory()
         self.prepare_command()
 
+        if self.containerized:
+            self.container_artifact_dir = os.path.join("/runner/artifacts", "{}".format(self.ident))
+
+            if self.fact_cache_type == 'jsonfile':
+                self.fact_cache = os.path.join(self.container_artifact_dir, 'fact_cache')
+
+
         if self.execution_mode == ExecutionMode.ANSIBLE_PLAYBOOK and self.playbook is None:
             raise ConfigurationError("Runner playbook required when running ansible-playbook")
         elif self.execution_mode == ExecutionMode.ANSIBLE and self.module is None:
@@ -220,7 +227,11 @@ class RunnerConfig(object):
         self.env['ANSIBLE_RETRY_FILES_ENABLED'] = 'False'
         if 'ANSIBLE_HOST_KEY_CHECKING' not in self.env:
             self.env['ANSIBLE_HOST_KEY_CHECKING'] = 'False'
-        self.env['AWX_ISOLATED_DATA_DIR'] = self.artifact_dir
+
+        if self.containerized:
+            self.env['AWX_ISOLATED_DATA_DIR'] = self.container_artifact_dir
+        else:
+            self.env['AWX_ISOLATED_DATA_DIR'] = self.artifact_dir
 
         if self.resource_profiling:
             callback_whitelist = os.environ.get('ANSIBLE_CALLBACK_WHITELIST', '').strip()
@@ -582,13 +593,14 @@ class RunnerConfig(object):
                 _ensure_path_safe_to_mount(host_path)
                 new_args.extend(["-v", "{}:{}:Z".format(host_path, container_path)])
 
-        env_var_whitelist = ['PROJECT_UPDATE_ID', 'ANSIBLE_CALLBACK_PLUGINS', 'ANSIBLE_STDOUT_CALLBACK']
+        env_var_whitelist = [
+            'PROJECT_UPDATE_ID', 'ANSIBLE_CALLBACK_PLUGINS', 'ANSIBLE_STDOUT_CALLBACK',
+            'AWX_ISOLATED_DATA_DIR', 'ANSIBLE_CACHE_PLUGIN', 'ANSIBLE_CACHE_PLUGIN_CONNECTION',
+        ]
+
         for k, v in self.env.items():
             if k in env_var_whitelist:
                 new_args.extend(["-e", "{}={}".format(k, v)])
-
-        artifact_dir = os.path.join("/runner/artifacts", "{}".format(self.ident))
-        new_args.extend(["-e", "AWX_ISOLATED_DATA_DIR={}".format(artifact_dir)])
 
         if 'podman' in self.process_isolation_executable:
             new_args.extend(['--quiet']) # docker doesnt support this option
@@ -611,8 +623,7 @@ class RunnerConfig(object):
         necessary calls to ``ssh-agent``
         """
         if self.containerized:
-            artifact_dir = os.path.join("/runner/artifacts", "{}".format(self.ident))
-            ssh_key_path = os.path.join(artifact_dir, "ssh_key_data")
+            ssh_key_path = os.path.join(self.container_artifact_dir, "ssh_key_data")
 
         if ssh_key_path:
             ssh_add_command = args2cmdline('ssh-add', ssh_key_path)
