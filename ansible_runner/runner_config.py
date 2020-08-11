@@ -713,6 +713,11 @@ class RunnerConfig(object):
             )
             new_args.extend(["-e", "SSH_AUTH_SOCK={}".format(os.environ['SSH_AUTH_SOCK'])])
 
+            if 'podman' in self.process_isolation_executable:
+                # container namespace stuff
+                new_args.extend(["--userns=keep-id"])
+                new_args.extend(["--ipc=host"])
+
 
         # These directories need to exist before they are mounted in the container,
         # or they will be owned by root.
@@ -739,10 +744,6 @@ class RunnerConfig(object):
         new_args.extend(["-e", "AWX_ISOLATED_DATA_DIR={}".format(artifact_dir)])
 
         if 'podman' in self.process_isolation_executable:
-            # container namespace stuff
-            new_args.extend(["--userns=keep-id"])
-            new_args.extend(["--ipc=host"])
-
             # docker doesnt support this option
             new_args.extend(['--quiet'])
 
