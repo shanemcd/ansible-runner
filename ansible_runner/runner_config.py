@@ -614,10 +614,6 @@ class RunnerConfig(object):
 
         _ensure_path_safe_to_mount(self.private_data_dir)
 
-        if not self.cli_execenv_cmd:
-            dirs_to_create = ['project', 'artifacts', 'inventory', 'env']
-        else:
-            dirs_to_create = ['artifacts']
 
         def _parse_cli_execenv_cmd_playbook_args():
 
@@ -698,7 +694,7 @@ class RunnerConfig(object):
                             ])
 
             # volume mount ~/.ssh/ into the exec env container
-            new_args.extend(["-v", "{}/.ssh/:/home/runner/.ssh/".format(os.environ['HOME'])])
+            new_args.extend(["-v", "{}/.ssh/:/runner/.ssh/".format(os.environ['HOME'])])
 
             # volume mount system-wide ssh_known_hosts the exec env container
             if os.path.exists('/etc/ssh/ssh_known_hosts'):
@@ -721,11 +717,13 @@ class RunnerConfig(object):
 
         # These directories need to exist before they are mounted in the container,
         # or they will be owned by root.
+        dirs_to_create = ['project', 'artifacts', 'inventory', 'env']
+
         for d in dirs_to_create:
             if not os.path.exists(os.path.join(self.private_data_dir, d)):
                 os.mkdir(os.path.join(self.private_data_dir, d), 0o700)
 
-            new_args.extend(["-v", "{}:/runner/{}".format(os.path.join(self.private_data_dir, d), d)])
+            new_args.extend(["-v", "{}:/runner/{}:Z".format(os.path.join(self.private_data_dir, d), d)])
 
         container_volume_mounts = self.container_volume_mounts
         if container_volume_mounts:

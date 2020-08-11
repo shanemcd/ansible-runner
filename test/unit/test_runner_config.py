@@ -614,10 +614,10 @@ def test_containerization_settings(mock_mkdir, container_runtime):
 
     expected_command_start = [container_runtime, 'run', '--rm', '--tty', '--interactive', '--workdir', '/runner/project'] + \
         ['-e', 'LAUNCHED_BY_RUNNER=1'] + \
-        ['-v', '{}:/runner/project'.format(os.path.join(rc.private_data_dir, 'project'))] + \
-        ['-v', '{}:/runner/artifacts'.format(os.path.join(rc.private_data_dir, 'artifacts'))] + \
-        ['-v', '{}:/runner/inventory'.format(os.path.join(rc.private_data_dir, 'inventory'))] + \
-        ['-v', '{}:/runner/env'.format(os.path.join(rc.private_data_dir, 'env'))] + \
+        ['-v', '{}:/runner/project:Z'.format(os.path.join(rc.private_data_dir, 'project'))] + \
+        ['-v', '{}:/runner/artifacts:Z'.format(os.path.join(rc.private_data_dir, 'artifacts'))] + \
+        ['-v', '{}:/runner/inventory:Z'.format(os.path.join(rc.private_data_dir, 'inventory'))] + \
+        ['-v', '{}:/runner/env:Z'.format(os.path.join(rc.private_data_dir, 'env'))] + \
         ['-v', '/host1:/container1', '-v', 'host2:/container2'] + \
         ['-e', 'AWX_ISOLATED_DATA_DIR=/runner/artifacts/{}'.format(rc.ident)] + \
         extra_container_args + \

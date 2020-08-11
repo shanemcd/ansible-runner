@@ -7,7 +7,7 @@
 if [ `id -u` -ge 500 ] || [ -z "${CURRENT_UID}" ]; then
 cat << EOF > /etc/passwd
 root:x:0:0:root:/root:/bin/bash
-runner:x:`id -u`:`id -g`:,,,:/home/runner:/bin/bash
+runner:x:`id -u`:`id -g`:,,,:/runner:/bin/bash
 EOF
 fi
 
