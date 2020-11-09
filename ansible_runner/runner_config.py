@@ -391,6 +391,8 @@ class RunnerConfig(object):
             else:
                 self.cwd = self.project_dir
 
+        from remote_pdb import RemotePdb
+        RemotePdb('127.0.0.1', 4444).set_trace()
         if 'fact_cache' in self.settings:
             if 'fact_cache_type' in self.settings:
                 if self.settings['fact_cache_type'] == 'jsonfile':
